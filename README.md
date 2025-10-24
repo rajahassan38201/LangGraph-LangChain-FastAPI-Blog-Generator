@@ -1,5 +1,9 @@
 # AI Blog Generator (FastAPI + LangGraph)
 
+https://github.com/user-attachments/assets/dda8ee22-5804-4ee8-946e-2087a8593617
+
+
+
 This is a full-stack web application that uses a multi-step AI agent to generate blog posts. The user provides a blog title, and the AI (powered by LangGraph) first generates a concise outline and then writes a full blog post based on that outline.
 
 The application features a modern, responsive frontend built with Tailwind CSS and a powerful backend using FastAPI and LangGraph to manage the AI workflow.
@@ -117,6 +121,7 @@ It will then show a second loader and display the final blog post.
 ├── index.html    # The main HTML/Tailwind/JS frontend
 ├── .env          # Stores your API key (you must create this)
 └── README.md     # This file
+
 
 
 This project is licensed under the MIT License.
