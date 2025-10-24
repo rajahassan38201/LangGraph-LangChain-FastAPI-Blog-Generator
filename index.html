@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Blog Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Define the gradient flow animation */
+        @keyframes gradient-flow {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Custom scrollbar for a new pink/blue theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #fbcfe8;
+            /* pink-200 */
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #93c5fd;
+            /* blue-300 */
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #60a5fa;
+            /* blue-400 */
+        }
+
+        /* Custom preformatted text style for light theme */
+        .blog-output {
+            background-color: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            color: #1f2937;
+            /* gray-800 */
+            white-space: pre-wrap;
+            /* Allows text to wrap */
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+
+        /* Pulse animation for light theme loaders */
+        @keyframes pulse-bg {
+
+            0%,
+            100% {
+                background-color: rgba(0, 0, 0, 0.1);
+            }
+
+            50% {
+                background-color: rgba(0, 0, 0, 0.15);
+            }
+        }
+
+        .loader-skeleton {
+            animation: pulse-bg 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<!-- 
+  Gradient background: pink-200 -> purple-200 -> blue-300
+  Animated with gradient-flow
+-->
+
+<body
+    class="bg-gradient-to-br from-pink-200 via-purple-200 to-blue-300 text-gray-900 min-h-screen p-4 sm:p-8 flex items-center justify-center bg-[length:400%_400%] animate-[gradient-flow_15s_ease_infinite]">
+
+    <!-- 
+      Card with light frosted glass effect
+    -->
+    <div
+        class="w-full max-w-4xl bg-white/70 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl overflow-hidden">
+        <!-- Header -->
+        <div class="p-6 sm:p-8 border-b border-gray-300/50">
+            <!-- Header text with pink/blue gradient -->
+            <h1
+                class="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-blue-500 mb-2">
+                AI Blog Generator
+            </h1>
+            <p class="text-base sm:text-lg text-gray-600">
+                Enter a blog title and let AI create a detailed outline and a full post for you, step-by-step.
+            </p>
+        </div>
+
+        <!-- Content Area -->
+        <div class="p-6 sm:p-8">
+            <!-- Input Form -->
+            <form id="blog-form" class="mb-8">
+                <label for="title-input" class="block text-sm font-medium text-gray-700 mb-2">Blog Post Title</label>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <!-- Input with pink focus ring -->
+                    <input type="text" id="title-input" placeholder="e.g., 'The Future of Renewable Energy'"
+                        class="flex-grow bg-white/50 border border-gray-400/50 text-gray-900 placeholder-gray-500 rounded-lg shadow-inner focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 px-4 py-3 outline-none"
+                        required>
+                    <!-- Button with pink/blue gradient -->
+                    <button type="submit" id="generate-btn"
+                        class="relative inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-pink-500 to-blue-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-pink-600 hover:to-blue-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 focus:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="btn-text">Generate</span>
+                        <!-- Loading Spinner (hidden by default) -->
+                        <svg id="btn-loader" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Error Message Area -->
+            <div id="error-message" class="hidden p-4 mb-6 bg-red-100 border border-red-300 text-red-800 rounded-lg">
+                <strong>Error:</strong> <span id="error-text"></span>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results-section" class="hidden space-y-8">
+
+                <!-- Step 1: Outline -->
+                <div id="outline-section" class="opacity-0 transition-opacity duration-1000">
+                    <!-- Flex container for title and copy button -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold text-pink-700">
+                            1. Generated Outline
+                        </h2>
+                        <!-- Copy Outline Button -->
+                        <button id="copy-outline-btn" title="Copy Outline"
+                            class="p-2 rounded-lg text-gray-500 hover:bg-white/50 hover:text-pink-600 transition-colors duration-200">
+                            <!-- SVG for copy icon -->
+                            <svg id="copy-outline-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                <path
+                                    d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                                <path
+                                    d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+                            </svg>
+                            <!-- SVG for check icon (hidden) -->
+                            <svg id="check-outline-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                fill="currentColor" class="bi bi-check-lg hidden text-green-500" viewBox="0 0 16 16">
+                                <path
+                                    d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- Outline Loader Skeleton -->
+                    <div id="outline-loader" class="space-y-3">
+                        <div class="h-4 bg-gray-300 rounded-md loader-skeleton w-3/4"></div>
+                        <div class="h-4 bg-gray-300 rounded-md loader-skeleton w-1/2"></div>
+                        <div class="h-4 bg-gray-300 rounded-md loader-skeleton w-5/6"></div>
+                        <div class="h-4 bg-gray-300 rounded-md loader-skeleton w-full"></div>
+                    </div>
+                    <!-- Outline Content -->
+                    <pre id="outline-content" class="blog-output hidden"></pre>
+                </div>
+
+                <!-- Step 2: Blog Content -->
+                <div id="content-section" class="hidden opacity-0 transition-opacity duration-1000">
+                    <!-- Flex container for title and copy button -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold text-blue-700">
+                            2. Generated Blog Post
+                        </h2>
+                        <!-- Copy Content Button -->
+                        <button id="copy-content-btn" title="Copy Blog Post"
+                            class="p-2 rounded-lg text-gray-500 hover:bg-white/50 hover:text-blue-600 transition-colors duration-200">
+                            <!-- SVG for copy icon -->
+                            <svg id="copy-content-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                <path
+                                    d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
+                                <path
+                                    d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z" />
+                            </svg>
+                            <!-- SVG for check icon (hidden) -->
+                            <svg id="check-content-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                fill="currentColor" class="bi bi-check-lg hidden text-green-500" viewBox="0 0 16 16">
+                                <path
+                                    d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- Content Loader Skeleton -->
+                    <div id="content-loader" class="space-y-3">
+                        <div class="h-4 bg-gray-300 rounded-md loader-skeleton w-full"></div>
+                        <div class="h-4 bg-gray-300 rounded-md loader-skeleton w-full"></div>
+                        <div class="h-4 bg-gray-300 rounded-md loader-skeleton w-5/6"></div>
+                        <div class="h-4 bg-gray-300 rounded-md loader-skeleton w-1/2"></div>
+                        <div class="h-4 bg-gray-300 rounded-md loader-skeleton w-full"></div>
+                        <div class="h-4 bg-gray-300 rounded-md loader-skeleton w-3/4"></div>
+                    </div>
+                    <!-- Blog Content -->
+                    <pre id="content-content" class="blog-output hidden"></pre>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const blogForm = document.getElementById('blog-form');
+        const titleInput = document.getElementById('title-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnLoader = document.getElementById('btn-loader');
+
+        const resultsSection = document.getElementById('results-section');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+
+        const outlineSection = document.getElementById('outline-section');
+        const outlineLoader = document.getElementById('outline-loader');
+        const outlineContent = document.getElementById('outline-content');
+
+        const contentSection = document.getElementById('content-section');
+        const contentLoader = document.getElementById('content-loader');
+        const contentContent = document.getElementById('content-content');
+
+        // Set API endpoint
+        const API_URL = 'http://127.0.0.1:8000/generate-blog-stream/';
+
+        // Form submit handler
+        blogForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = titleInput.value;
+            if (!title) return;
+
+            // --- Reset UI and Show Loaders ---
+            setLoadingState(true);
+
+            try {
+                // --- Make API Call ---
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: title })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'An unknown error occurred');
+                }
+
+                // --- Process Stream ---
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    // Add new chunk to buffer
+                    buffer += decoder.decode(value, { stream: true });
+
+                    // Process all complete lines in the buffer
+                    const lines = buffer.split('\n');
+
+                    // Keep the last partial line (if any) in the buffer
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (line.trim() === '') continue; // Skip empty lines
+
+                        try {
+                            const json = JSON.parse(line);
+                            handleStreamEvent(json);
+                        } catch (error) {
+                            console.error('Error parsing stream line:', error, 'Line:', line);
+                        }
+                    }
+                }
+
+                // Process any remaining data in buffer (if stream ends without newline)
+                if (buffer.trim() !== '') {
+                    try {
+                        const json = JSON.parse(buffer);
+                        handleStreamEvent(json);
+                    } catch (error) {
+                        console.error('Error parsing final buffer:', error, 'Buffer:', buffer);
+                    }
+                }
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showError(error.message);
+            } finally {
+                // --- Restore UI ---
+                setLoadingState(false);
+            }
+        });
+
+        function handleStreamEvent(event) {
+            if (event.type === 'outline') {
+                // --- Outline is ready ---
+                outlineLoader.classList.add('hidden');
+                outlineContent.textContent = event.data;
+                outlineContent.classList.remove('hidden');
+
+                // Show next step (content loader)
+                contentSection.classList.remove('hidden');
+                // Use requestAnimationFrame to ensure the class is added *after* display
+                requestAnimationFrame(() => {
+                    contentSection.classList.add('opacity-100');
+                });
+
+            } else if (event.type === 'content') {
+                // --- Content is ready ---
+                contentLoader.classList.add('hidden');
+                contentContent.textContent = event.data;
+                contentContent.classList.remove('hidden');
+
+            } else if (event.type === 'error') {
+                // --- An error occurred during streaming ---
+                showError(event.data);
+                contentLoader.classList.add('hidden');
+                outlineLoader.classList.add('hidden');
+            }
+        }
+
+        function setLoadingState(isLoading) {
+            if (isLoading) {
+                // Disable button and show loader
+                generateBtn.disabled = true;
+                btnText.classList.add('hidden');
+                btnLoader.classList.remove('hidden');
+
+                // Reset and show results area
+                errorMessage.classList.add('hidden');
+                resultsSection.classList.remove('hidden');
+
+                // Reset outline section
+                outlineSection.classList.remove('opacity-100');
+                outlineContent.classList.add('hidden');
+                outlineLoader.classList.remove('hidden');
+                // Fade in the outline section
+                requestAnimationFrame(() => {
+                    outlineSection.classList.add('opacity-100');
+                });
+
+                // Hide content section
+                contentSection.classList.add('hidden');
+                contentSection.classList.remove('opacity-100');
+                contentContent.classList.add('hidden');
+                contentLoader.classList.remove('hidden');
+            } else {
+                // Enable button and hide loader
+                generateBtn.disabled = false;
+                btnText.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+            }
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+            resultsSection.classList.add('hidden'); // Hide results on error
+        }
+
+        // --- Clipboard Function ---
+        function copyToClipboard(text) {
+            // Create a temporary textarea element
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+
+            // Set it to be invisible
+            textArea.style.position = 'absolute';
+            textArea.style.left = '-9999px';
+            textArea.style.top = '0';
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            let success = false;
+            try {
+                // Use execCommand for broader compatibility
+                success = document.execCommand('copy');
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+
+            // Clean up
+            document.body.removeChild(textArea);
+            return success;
+        }
+
+        // --- Copy Button Logic ---
+        const copyOutlineBtn = document.getElementById('copy-outline-btn');
+        const copyOutlineIcon = document.getElementById('copy-outline-icon');
+        const checkOutlineIcon = document.getElementById('check-outline-icon');
+
+        const copyContentBtn = document.getElementById('copy-content-btn');
+        const copyContentIcon = document.getElementById('copy-content-icon');
+        const checkContentIcon = document.getElementById('check-content-icon');
+
+        copyOutlineBtn.addEventListener('click', () => {
+            const textToCopy = outlineContent.textContent;
+            if (copyToClipboard(textToCopy)) {
+                // Show check, hide copy
+                copyOutlineIcon.classList.add('hidden');
+                checkOutlineIcon.classList.remove('hidden');
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    copyOutlineIcon.classList.remove('hidden');
+                    checkOutlineIcon.classList.add('hidden');
+                }, 2000);
+            }
+        });
+
+        copyContentBtn.addEventListener('click', () => {
+            const textToCopy = contentContent.textContent;
+            if (copyToClipboard(textToCopy)) {
+                // Show check, hide copy
+                copyContentIcon.classList.add('hidden');
+                checkContentIcon.classList.remove('hidden');
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    copyContentIcon.classList.remove('hidden');
+                    checkContentIcon.classList.add('hidden');
+                }, 2000);
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>
